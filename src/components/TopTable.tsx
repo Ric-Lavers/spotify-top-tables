@@ -76,21 +76,29 @@ const TopTable = () => {
   const [
     {
       matches,
+      context,
       context: { timeRange, isNewGroupModalOpen },
       value,
       ...rest
     },
     send,
+    //@ts-ignore
   ] = useMachine(topTableMachine, {
     devTools: true,
   })
 
-  console.log(value)
-  console.log(matches(""))
-
   const isTrack = matches({ topTable: "trackTable" })
   const isShortTerm = matches({ topTable: { timeRange: "short_term" } })
-  console.log({ isShortTerm, isTrack })
+
+  console.log(value)
+  console.log(
+    matches({
+      topTable: {
+        timeRange: "short_term",
+      },
+    }),
+  )
+  // console.log({ isShortTerm, isTrack })
 
   let { genres, items } = useTopData(isTrack ? "tracks" : "artists", timeRange)
 
@@ -108,13 +116,29 @@ const TopTable = () => {
     <div style={buttonGroup}>
       <button
         style={button}
-        className={isTrack ? "success" : ""}
+        className={
+          matches({
+            topTable: {
+              table_Type: "trackTable",
+            },
+          })
+            ? "success"
+            : ""
+        }
         onClick={() => send("SELECT_TRACK")}>
         Tracks
       </button>
       <button
         style={button}
-        className={!isTrack ? "success" : ""}
+        className={
+          matches({
+            topTable: {
+              table_Type: "artistTable",
+            },
+          })
+            ? "success"
+            : ""
+        }
         onClick={() => send("SELECT_ARTIST")}>
         Artists
       </button>
@@ -135,7 +159,15 @@ const TopTable = () => {
             style={button}
             //@ts-ignore
             onClick={ranges[value]}
-            className={value === timeRange ? "success" : ""}>
+            className={
+              matches({
+                topTable: {
+                  timeRange: value,
+                },
+              })
+                ? "success"
+                : ""
+            }>
             {label}
           </button>
         ),
@@ -176,7 +208,7 @@ const TopTable = () => {
             Top Three Genres:
             <ol>
               {topThreeGenres.map(({ name }) => (
-                <li>{name}</li>
+                <li key={name}>{name}</li>
               ))}
             </ol>
           </div>

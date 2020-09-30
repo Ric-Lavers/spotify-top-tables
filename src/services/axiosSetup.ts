@@ -8,7 +8,6 @@ const Axios = ({
   headers?: object
 } = {}): AxiosInstance => {
   const spotifyToken = sessionStorage.spotifyToken
-  console.log({ spotifyToken })
 
   const Axios = axios.create({
     // baseURL: "https://api.spotify.com/v1/",

@@ -76,7 +76,6 @@ class SpotifyLogin extends Component {
 
     if (spotifyToken) {
       this.setState({ tokenPresent: true })
-      getCurrentUsersProfile(spotifyToken).then(console.log)
       try {
         // set User
         let {
@@ -97,6 +96,7 @@ class SpotifyLogin extends Component {
         onLogIn(true)
         return true
       } catch (error) {
+        console.log("error.status", { ...error })
         // timed out
         this.setState({ tokenValid: false })
         onLogIn(false)

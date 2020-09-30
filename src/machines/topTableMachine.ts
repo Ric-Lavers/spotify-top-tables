@@ -1,14 +1,34 @@
+//@ts-nocheck
 import { Machine, assign } from "xstate"
+import {
+  UsersTopArtistsResponse,
+  UsersTopTracksResponse,
+} from "types/spotify-api"
+import { getTopTracks } from "services/me/top/tracks"
 
 interface TContext {
   type: "track" | "artist"
   timeRange: "short_term" | "medium_term" | "long_term"
   groupName: string
   isNewGroupModalOpen: boolean
+  tracks: UsersTopTracksResponse | null
 }
 interface TStateSchema {
   states: {
-    intitalFetch: {}
+    intitalFetch: {
+      invoke: {
+        id: string
+        src: string
+        onDone: {
+          target: string
+          actions: string
+        }
+        onError: {
+          actions?: string
+          target: string
+        }
+      }
+    }
     topTable: {
       type: "parallel"
       states: {
@@ -46,7 +66,7 @@ type TEvent =
   | { type: "SUBMIT_NEW_GROUP" }
   | { type: string }
   | { type: "SET_TIME_RANGE"; range: Pick<TContext, "timeRange"> }
-//@ts-nocheck
+
 const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
   {
     id: "top-table",
@@ -56,14 +76,24 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
       timeRange: "short_term",
       groupName: "all",
       isNewGroupModalOpen: false,
+      tracks: null,
     },
     states: {
       error: {
         type: "final",
       },
+
       intitalFetch: {
-        on: {
-          "": [{ target: "topTable" }, { target: "error", cond: () => false }],
+        invoke: {
+          id: "intialFetch",
+          src: "invokeInitialTrackTable",
+          onDone: {
+            target: "topTable",
+            actions: ["setTracks"],
+          },
+          onError: {
+            target: "error",
+          },
         },
       },
 
@@ -91,7 +121,6 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
         type: "parallel",
         states: {
           timeRange: {
-            // type: "history",
             initial: "short_term",
             on: {
               SELECT_SHORT_TERM: ".short_term",
@@ -99,20 +128,18 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
               SELECT_LONG_TERM: ".long_term",
             },
             states: {
-              short_term: {
-                // type: "history",
-              },
+              short_term: {},
               medium_term: {
-                // type: "history",
+                states: {
+                  check: {},
+                  idle: {},
+                },
               },
-              long_term: {
-                // type: "history",
-              },
+              long_term: {},
             },
           },
 
           table_Type: {
-            // type: "history",
             initial: "trackTable",
             on: {
               SELECT_TRACK: ".trackTable",
@@ -151,9 +178,18 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
       setGroupName: console.log,
       newGroupModal: console.log,
       //@ts-ignore
+      setTracks: assign((ctx, { data }) => ({ tracks: data })),
+      //@ts-ignore
       // newGroupModal: assign(() => ({
       //   isNewGroupModalOpen: true,
       // })),
+    },
+    services: {
+      invokeInitialTrackTable: ({ timeRange }, event) => {
+        console.log(event)
+
+        return getTopTracks({ time_range: timeRange })
+      },
     },
   },
 )
