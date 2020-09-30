@@ -91,13 +91,7 @@ const TopTable = () => {
   const isShortTerm = matches({ topTable: { timeRange: "short_term" } })
 
   console.log(value)
-  console.log(
-    matches({
-      topTable: {
-        timeRange: "short_term",
-      },
-    }),
-  )
+
   // console.log({ isShortTerm, isTrack })
 
   let { genres, items } = useTopData(isTrack ? "tracks" : "artists", timeRange)

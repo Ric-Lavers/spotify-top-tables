@@ -120,6 +120,10 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
       topTable: {
         type: "parallel",
         states: {
+          hist: {
+            type: "history",
+            history: "deep",
+          },
           timeRange: {
             initial: "short_term",
             on: {
@@ -165,7 +169,7 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
     },
     on: {
       OPEN_MODAL: "newGroupModal",
-      CLOSE_MODAL: "topTable",
+      CLOSE_MODAL: "topTable.hist",
       // NEW_GROUP: "newGroupModal",
     },
   },
