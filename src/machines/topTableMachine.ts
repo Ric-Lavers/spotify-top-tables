@@ -156,11 +156,6 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
           },
         },
         on: {
-          // SELECT_TRACK: "topTable.table_Type.trackTable",
-          // SELECT_ARTIST: "topTable.table_Type.artistTable",
-          // SELECT_TIME_RANGE_SHORT_TERM: "topTable.timeRange.short_term",
-          // // SELECT_TIME_RANGE_MEDIUM_TERM: "topTable.timeRange.medium_term",
-          // SELECT_TIME_RANGE_LONG_TERM: "topTable.timeRange.long_term",
           SET_TIME_RANGE: {
             actions: "setTimeRange",
           },
