@@ -7,7 +7,8 @@ import * as serviceWorker from "./serviceWorker"
 
 inspect({
   // options
-  // url: 'https://statecharts.io/inspect', // (default)
+  // url: "https://statecharts.io/inspect", // (default)
+  // iframe: () => document.querySelector("iframe[data-xstate]"),
   iframe: false, // open in new window
 })
 

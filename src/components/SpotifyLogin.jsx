@@ -96,7 +96,9 @@ class SpotifyLogin extends Component {
         onLogIn(true)
         return true
       } catch (error) {
-        console.log("error.status", { ...error })
+        if (error?.response?.status === 401) {
+          window.location.href = LOGIN_URL
+        }
         // timed out
         this.setState({ tokenValid: false })
         onLogIn(false)
