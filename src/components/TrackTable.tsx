@@ -1,16 +1,24 @@
-import React from "react";
+import React from "react"
+import { TrackObjectFull } from "../types/spotify-api"
+import PopularityMeter from "./PopularityMeter"
 
-import PopularityMeter from "./PopularityMeter";
+interface Props {
+  items: TrackObjectFull[]
+  id: string
+  iterate: boolean
+  onNameClick: Function
+  saveTrack?: Function
+  toggleSaveAll?: Function
+}
 
-export const TrackTable = ({
+const TrackTable = ({
   onNameClick,
   items,
   saveTrack,
   toggleSaveAll,
   iterate,
   id,
-  ...props
-}) => (
+}: Props) => (
   <table id={id}>
     <thead>
       <tr>
@@ -25,7 +33,7 @@ export const TrackTable = ({
             Like
             <input
               onChange={({ target: { checked } }) => {
-                toggleSaveAll(checked);
+                toggleSaveAll(checked)
               }}
               id="follow-check"
               type="checkbox"
@@ -45,10 +53,9 @@ export const TrackTable = ({
             id,
             uri,
             popularity,
-            saved,
             type,
           },
-          i
+          i,
         ) => {
           return (
             <tr className="results__item" key={id}>
@@ -74,20 +81,22 @@ export const TrackTable = ({
                     }
                     id="follow-check"
                     type="checkbox"
-                    checked={saved}
+                    checked={false}
                     name="followingLabel"
                   />
                 </td>
               )}
             </tr>
-          );
-        }
+          )
+        },
       )}
     </tbody>
   </table>
-);
+)
 
 TrackTable.defaultProps = {
   id: "search-results",
   onNameClick: () => {},
-};
+}
+
+export default React.memo(TrackTable)
