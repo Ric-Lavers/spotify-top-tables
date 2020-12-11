@@ -4,5 +4,5 @@ import Axios from "services/axiosSetup"
 export function getTopTracks(params: {
   time_range: string
 }): Promise<UsersTopTracksResponse> {
-  return Axios.get("me/top/tracks", { params })
+  return Axios.get("me/top/tracks", { params, })
 }

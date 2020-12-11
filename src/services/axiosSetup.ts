@@ -21,7 +21,18 @@ const Axios = ({
     },
     ...config,
   })
+  // Axios.defaults.withCredentials = true
 
+  Axios.interceptors.request.use((config) => {
+    if (document.cookie) config.headers.Cookie = document.cookie
+    if (sessionStorage.spotify_user_id)
+      config.params = {
+        ...config.params,
+        spotify_user_id: sessionStorage.spotify_user_id,
+      }
+
+    return config
+  })
   Axios.interceptors.response.use(
     (res: AxiosResponse) => res.data,
     // this will returned undefined on network error

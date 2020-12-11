@@ -6,27 +6,16 @@ import TrackTable from "./TrackTable"
 import ArtistTable from "./ArtistTable"
 import NewGroupModal from "./NewGroupModal"
 import topTableMachine from "../machines/topTableMachine"
-
-const buttonGroup = {
-  display: "flex",
-  justifyContent: "flex-start",
-  width: 100,
-}
-const button = {
-  cursor: "pointer",
-  padding: 4,
-}
-const TopRow = {
-  display: "flex",
-  justifyContent: "space-between",
-}
+import SwitchTimeRangeButtons from "./SwitchTimeRangeButtons"
+import ToggleTypeButtons from "./ToggleTypeButtons"
+import * as S from "./TopTables.style"
 
 const TopTable = () => {
   const [
     {
       matches,
       context,
-      context: { time_range, type, isNewGroupModalOpen, topData },
+      context: { time_range, type, isNewGroupModalOpen, topData, groupList },
       value,
       toStrings,
       ...rest
@@ -41,57 +30,34 @@ const TopTable = () => {
 
   const isTrack = matches({ topTable: "trackTable" })
   const topThreeGenres = (currentTableData?.genres || []).slice(0, 3)
+  const handleGroupChange = ({
+    target: { value: id },
+  }: React.ChangeEvent<HTMLSelectElement>) => {
+    id && send("SELECT_GROUP", { id })
+  }
 
-  const ToggleTypeButtons = () => (
-    <div style={buttonGroup}>
-      <button
-        style={button}
-        className={
-          matches({
-            topTable: "trackTable",
-          })
-            ? "success"
-            : ""
-        }
-        onClick={() => send("SELECT_TRACK")}>
-        Tracks
-      </button>
-      <button
-        style={button}
-        className={
-          matches({
-            topTable: "artistTable",
-          })
-            ? "success"
-            : ""
-        }
-        onClick={() => send("SELECT_ARTIST")}>
-        Artists
-      </button>
-    </div>
-  )
+  const GroupSelect = () => {
+    if (!groupList.length) return null
+    return (
+      <select onChange={handleGroupChange}>
+        <option value={""}>yours</option>
+        {groupList.map(({ _id, name }) => (
+          <option value={_id}>{name}</option>
+        ))}
+      </select>
+    )
+  }
 
-  const SwitchTimeRangeButtons = () => (
-    <div style={buttonGroup}>
-      {top_time_range.map(
-        ({ value, label }: { value: string; label: string }) => (
-          <button
-            key={label}
-            style={button}
-            //@ts-ignore
-            onClick={() =>
-              send("SET_" + type.toUpperCase() + "_TIME_RANGE", {
-                time_range: value,
-              })
-            }
-            className={time_range === value ? "success" : ""}>
-            {label}
-          </button>
-        ),
-      )}
-    </div>
-  )
-  const isLoading = !!toStrings().join("").match("loading")
+  if (value === "error") {
+    return (
+      <>
+        error has occured
+        <S.Button onClick={() => send("RESET")}>reset?</S.Button>
+      </>
+    )
+  }
+  const isLoading =
+    !!toStrings().join("").match("loading") || value === "initalise"
 
   return (
     <div className="results top-table">
@@ -100,10 +66,16 @@ const TopTable = () => {
         onExit={() => {}}
         onSubmit={() => {}}
       />
-      <div style={TopRow}>
+      <S.TopRow>
         <div>
-          <ToggleTypeButtons />
-          <SwitchTimeRangeButtons />
+          <GroupSelect />
+          <ToggleTypeButtons matches={matches} send={send} />
+          <SwitchTimeRangeButtons
+            top_time_range={top_time_range}
+            send={send}
+            time_range={time_range}
+            type={type}
+          />
         </div>
         {!topThreeGenres.length ? null : (
           <div>
@@ -118,7 +90,7 @@ const TopTable = () => {
             </ol>
           </div>
         )}
-      </div>
+      </S.TopRow>
 
       {isLoading ? (
         "loading..."

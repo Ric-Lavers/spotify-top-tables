@@ -79,6 +79,7 @@ class SpotifyLogin extends Component {
       try {
         // set User
         let {
+          groups,
           display_name,
           email,
           images,
@@ -96,6 +97,7 @@ class SpotifyLogin extends Component {
         onLogIn(true)
         return true
       } catch (error) {
+        console.log("err", error.message)
         if (error?.response?.status === 401) {
           window.location.href = LOGIN_URL
         }

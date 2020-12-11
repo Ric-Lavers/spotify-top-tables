@@ -10,7 +10,6 @@ function App() {
     <div className="App">
       <SpotifyLogin onLogIn={set} />
       <header className="App-header">{loggedIn && <TopTable />}</header>
-      <iframe data-xstate />
     </div>
   )
 }
