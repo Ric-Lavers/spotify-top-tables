@@ -5,7 +5,7 @@ import { top_time_range } from "../constants"
 import TrackTable from "./TrackTable"
 import ArtistTable from "./ArtistTable"
 import NewGroupModal from "./NewGroupModal"
-import topTableMachine from "../machines/topTableMachine"
+import topTableMachine, { TopData } from "../machines/topTableMachine"
 import SwitchTimeRangeButtons from "./SwitchTimeRangeButtons"
 import ToggleTypeButtons from "./ToggleTypeButtons"
 import * as S from "./TopTables.style"
@@ -25,11 +25,18 @@ const TopTable = () => {
   ] = useMachine(topTableMachine, {
     devTools: true,
   })
-  //@ts-ignore
-  const currentTableData = topData[`${type}_${time_range}`]
+
+  const currentTableData: unknown =
+    topData[`${type}_${time_range}` as keyof TopData]
 
   const isTrack = matches({ topTable: "trackTable" })
-  const topThreeGenres = (currentTableData?.genres || []).slice(0, 3)
+  let topThreeGenres: string[] = []
+  if (type === "artist")
+    topThreeGenres = (
+      (currentTableData as ArtistObjectFull).genres || []
+    ).slice(0, 3)
+  console.log({ topThreeGenres })
+
   const handleGroupChange = ({
     target: { value: id },
   }: React.ChangeEvent<HTMLSelectElement>) => {
@@ -38,11 +45,13 @@ const TopTable = () => {
 
   const GroupSelect = () => {
     if (!groupList.length) return null
+    console.log(groupList)
+
     return (
       <select onChange={handleGroupChange}>
         <option value={""}>yours</option>
-        {groupList.map(({ _id, name }) => (
-          <option value={_id}>{name}</option>
+        {groupList.map(({ id, name }) => (
+          <option value={id}>{name + " " + id}</option>
         ))}
       </select>
     )
@@ -97,13 +106,13 @@ const TopTable = () => {
       ) : isTrack ? (
         <TrackTable
           id="top-table-tracks"
-          items={currentTableData.items as TrackObjectFull[]}
+          items={currentTableData as TrackObjectFull[]}
           iterate
         />
       ) : (
         <ArtistTable
           id="top-table-artists"
-          items={currentTableData.items as ArtistObjectFull[]}
+          items={currentTableData as ArtistObjectFull[]}
           iterate
         />
       )}

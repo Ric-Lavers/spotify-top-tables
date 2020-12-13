@@ -28,7 +28,7 @@ const TrackTable = ({
         <th>Album</th>
         <th className="hide-up-sm">Popular</th>
         <th className="hide-up-md">Released</th>
-        {toggleSaveAll && (
+        {/* toggleSaveAll && (
           <th style={{ textAlign: "center" }}>
             Like
             <input
@@ -40,7 +40,7 @@ const TrackTable = ({
               name="followingLabel"
             />
           </th>
-        )}
+        ) */}
       </tr>
     </thead>
     <tbody>
@@ -73,7 +73,7 @@ const TrackTable = ({
                 />
               </td>
               <td className="hide-up-md">{release_date}</td>
-              {saveTrack && (
+              {/* saveTrack&& (
                 <td style={{ textAlign: "center" }}>
                   <input
                     onChange={({ target: { checked } }) =>
@@ -85,7 +85,7 @@ const TrackTable = ({
                     name="followingLabel"
                   />
                 </td>
-              )}
+              ) */}
             </tr>
           )
         },

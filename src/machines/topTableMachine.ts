@@ -4,7 +4,9 @@ import {
   UsersTopArtistsResponse,
   UsersTopTracksResponse,
   ArtistObjectFull,
+  TrackObjectFull,
 } from "types/spotify-api"
+import { getAllTop } from "services/me/top/all"
 import { getTopTracks } from "services/me/top/tracks"
 import { getTopArtists } from "services/me/top/artists"
 import { getCurrentUsersGroups } from "services/me/groups"
@@ -16,22 +18,23 @@ const getTopData = ({ type, time_range }) => {
     ? getTopArtists({ time_range })
     : getTopTracks({ time_range })
 }
-interface TContext {
+export interface TopData {
+  track_short_term: TrackObjectFull | null
+  track_medium_term: TrackObjectFull | null
+  track_long_term: TrackObjectFull | null
+
+  artist_short_term: ArtistObjectFull | null
+  artist_medium_term: ArtistObjectFull | null
+  artist_long_term: ArtistObjectFull | null
+}
+export interface TContext {
   type: "track" | "artist"
   time_range: "short_term" | "medium_term" | "long_term"
   selectedGroupId: string
   selectedGroupMembers: { display_name: string; _id: string }[]
-  groupList: { _id: string; name: string }[]
+  groupList: { _id: string; id: string; name: string }[]
   isNewGroupModalOpen: boolean
-  topData: {
-    track_short_term: UsersTopTracksResponse | null
-    track_medium_term: UsersTopTracksResponse | null
-    track_long_term: UsersTopTracksResponse | null
-
-    artist_short_term: UsersTopArtistsResponse | null
-    artist_medium_term: UsersTopArtistsResponse | null
-    artist_long_term: UsersTopArtistsResponse | null
-  }
+  topData: TopData
 }
 interface TStateSchema {
   states: {
@@ -93,10 +96,10 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
       error: {},
       initalise: {
         invoke: {
-          src: "invokeGetUsersGroups",
+          src: "invokeInit",
           onDone: {
             target: "topTable",
-            actions: ["setUsersGroupList"],
+            actions: ["setInitialData"],
           },
           onError: {
             actions: (_, e) => console.log(e),
@@ -145,71 +148,70 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
             },
           },
           trackTable: {
-            initial: "check",
+            initial: "display",
             states: {
-              check: {
-                on: {
-                  "": [
-                    {
-                      target: "display",
-                      cond: ({ topData, type, time_range }) =>
-                        !!topData[`${type}_${time_range}`],
-                    },
-                    {
-                      target: "loading",
-                    },
-                  ],
-                },
-              },
-              loading: {
-                invoke: {
-                  id: "getTopData",
-                  src: "invokeGetTopData",
-                  onDone: {
-                    target: "#top-table.topTable.trackTable.display",
-                    actions: ["setTopData"],
-                  },
-                  onError: {
-                    actions: (_, e) => console.log("onError", e),
-                    target: "#top-table.error",
-                  },
-                },
-              },
+              // check: {
+              //   on: {
+              //     "": [
+              //       {
+              //         target: "display",
+              //         cond: ({ topData, type, time_range }) =>
+              //           !!topData[`${type}_${time_range}`],
+              //       },
+              //       {
+              //         target: "loading",
+              //       },
+              //     ],
+              //   },
+              // },
+              // loading: {
+              //   invoke: {
+              //     id: "getTopData",
+              //     src: "invokeGetTopData",
+              //     onDone: {
+              //       target: "#top-table.topTable.trackTable.display",
+              //       actions: ["setTopData"],
+              //     },
+              //     onError: {
+              //       actions: (_, e) => console.log("onError", e),
+              //       target: "#top-table.error",
+              //     },
+              //   },
+              // },
               display: {},
             },
           },
           artistTable: {
-            initial: "check",
+            initial: "display",
             states: {
-              check: {
-                on: {
-                  "": [
-                    {
-                      target: "display",
-                      cond: ({ topData, type, time_range }) =>
-                        !!topData[`${type}_${time_range}`] &&
-                        !!topData[`${type}_${time_range}`].items,
-                    },
-                    {
-                      target: "loading",
-                    },
-                  ],
-                },
-              },
-              loading: {
-                invoke: {
-                  id: "getTopData",
-                  src: "invokeGetTopData",
-                  onDone: {
-                    target: "#top-table.topTable.artistTable.display",
-                    actions: ["setTopData"],
-                  },
-                  onError: {
-                    actions: (_, e) => console.log(e),
-                    target: "#top-table.error",
-                  },
-                },
-              },
+              // check: {
+              //   on: {
+              //     "": [
+              //       {
+              //         target: "display",
+              //         cond: ({ topData, type, time_range }) =>
+              //           !!topData[`${type}_${time_range}`],
+              //       },
+              //       {
+              //         target: "loading",
+              //       },
+              //     ],
+              //   },
+              // },
+              // loading: {
+              //   invoke: {
+              //     id: "getTopData",
+              //     src: "invokeGetTopData",
+              //     onDone: {
+              //       target: "#top-table.topTable.artistTable.display",
+              //       actions: ["setTopData"],
+              //     },
+              //     onError: {
+              //       actions: (_, e) => console.log(e),
+              //       target: "#top-table.error",
+              //     },
+              //   },
+              // },
               display: {},
             },
           },
@@ -262,9 +264,15 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
           },
         }
       }),
-      setUsersGroupList: assign((_, { data }) => ({
-        groupList: data,
-      })),
+      setInitialData: assign((_, { data }) => {
+        return {
+          groupList: data[0],
+          topData: Object.keys(data[1]).reduce((a, key) => {
+            a[key] = data[1][key].items
+            return a
+          }, {}),
+        }
+      }),
       setGroupData: assign(
         (
           _,
@@ -285,12 +293,12 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
             selectedGroupMembers: users,
             selectedGroupId: id,
             topData: {
-              track_short_term: { items: track_short_term },
-              track_medium_term: { items: track_medium_term },
-              track_long_term: { items: track_long_term },
-              artist_short_term: { items: artist_short_term },
-              artist_medium_term: { items: artist_medium_term },
-              artist_long_term: { items: artist_long_term },
+              track_short_term,
+              track_medium_term,
+              track_long_term,
+              artist_short_term,
+              artist_medium_term,
+              artist_long_term,
             },
           }
         },
@@ -302,8 +310,8 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
         return getTopData({ type, time_range })
       },
       addGroup: () => {},
-      invokeGetUsersGroups: () => {
-        return getCurrentUsersGroups()
+      invokeInit: () => {
+        return Promise.all([getCurrentUsersGroups(), getAllTop()])
       },
       invokeGroupById: ({ selectedGroupId }, event) => {
         console.log({ event, selectedGroupId })
