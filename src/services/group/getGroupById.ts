@@ -1,7 +1,7 @@
-import Axios from "services/axiosSetup"
+import Axios from "services/axiosSetup";
 
 export function getGroupById(id: string): Promise<any> {
-  console.log(id)
+  console.log(id);
 
-  return Axios.get(`groups/${id}`)
+  return Axios.get(`groups/${id}`);
 }

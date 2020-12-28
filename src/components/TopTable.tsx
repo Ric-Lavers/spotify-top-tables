@@ -1,21 +1,23 @@
-import React from "react"
-import { useMachine } from "@xstate/react"
-import { TrackObjectFull, ArtistObjectFull } from "../types/spotify-api"
-import { top_time_range } from "../constants"
-import TrackTable from "./TrackTable"
-import ArtistTable from "./ArtistTable"
-import NewGroupModal from "./NewGroupModal"
-import topTableMachine, { TopData } from "../machines/topTableMachine"
-import SwitchTimeRangeButtons from "./SwitchTimeRangeButtons"
-import ToggleTypeButtons from "./ToggleTypeButtons"
-import * as S from "./TopTables.style"
+import React from "react";
+import { useMachine } from "@xstate/react";
+
+import { TrackObjectFull, ArtistObjectFull } from "../types/spotify-api";
+import { top_time_range } from "../constants";
+import TrackTable from "./TrackTable";
+import ArtistTable from "./ArtistTable";
+import NewGroupModal from "./Modal/NewGroupModal";
+import topTableMachine, { TopData } from "../machines/topTableMachine";
+import SwitchTimeRangeButtons from "./SwitchTimeRangeButtons";
+import ToggleTypeButtons from "./ToggleTypeButtons";
+import GroupSelect from "./GroupSelect";
+import * as S from "./TopTables.style";
 
 const TopTable = () => {
   const [
     {
       matches,
       context,
-      context: { time_range, type, isNewGroupModalOpen, topData, groupList },
+      context: { time_range, type, topData, groupList },
       value,
       toStrings,
       ...rest
@@ -24,38 +26,34 @@ const TopTable = () => {
     //@ts-ignore
   ] = useMachine(topTableMachine, {
     devTools: true,
-  })
+  });
 
   const currentTableData: unknown =
-    topData[`${type}_${time_range}` as keyof TopData]
+    topData[`${type}_${time_range}` as keyof TopData];
 
-  const isTrack = matches({ topTable: "trackTable" })
-  let topThreeGenres: string[] = []
+  const isGroupModalOpen = matches("newGroupModal");
+  const isTrack = matches({ topTable: "trackTable" });
+  // const [isTrack, setIsTrack] = React.useState(_isTrack);
+
+  // React.useEffect(() => {
+  //   if (!isGroupModalOpen) {
+  //     setIsTrack(_isTrack);
+  //   }
+  // }, [_isTrack]);
+
+  console.log({ isGroupModalOpen });
+
+  let topThreeGenres: string[] = [];
   if (type === "artist")
     topThreeGenres = (
       (currentTableData as ArtistObjectFull).genres || []
-    ).slice(0, 3)
-  console.log({ topThreeGenres })
+    ).slice(0, 3);
 
   const handleGroupChange = ({
     target: { value: id },
   }: React.ChangeEvent<HTMLSelectElement>) => {
-    id && send("SELECT_GROUP", { id })
-  }
-
-  const GroupSelect = () => {
-    if (!groupList.length) return null
-    console.log(groupList)
-
-    return (
-      <select onChange={handleGroupChange}>
-        <option value={""}>yours</option>
-        {groupList.map(({ id, name }) => (
-          <option value={id}>{name + " " + id}</option>
-        ))}
-      </select>
-    )
-  }
+    id && send("SELECT_GROUP", { id });
+  };
 
   if (value === "error") {
     return (
@@ -63,21 +61,31 @@ const TopTable = () => {
         error has occured
         <S.Button onClick={() => send("RESET")}>reset?</S.Button>
       </>
-    )
+    );
   }
   const isLoading =
-    !!toStrings().join("").match("loading") || value === "initalise"
+    !!toStrings().join("").match("loading") || value === "initalise";
 
   return (
-    <div className="results top-table">
+    <S.TopTable>
       <NewGroupModal
-        isOpen={isNewGroupModalOpen}
-        onExit={() => {}}
-        onSubmit={() => {}}
+        isOpen={isGroupModalOpen}
+        onExit={() => {
+          send("CLOSE_MODAL");
+        }}
+        onSubmit={(group_name: string) => {
+          send("SET_NEW_GROUP_NAME", { group_name });
+        }}
       />
-      <S.TopRow>
+      <S.TopRow hidden={!isLoading}>
         <div>
-          <GroupSelect />
+          <GroupSelect
+            isLoading={isLoading}
+            groupList={groupList}
+            isGroupModalOpen={isGroupModalOpen}
+            onChange={handleGroupChange}
+            send={send}
+          />
           <ToggleTypeButtons matches={matches} send={send} />
           <SwitchTimeRangeButtons
             top_time_range={top_time_range}
@@ -116,8 +124,8 @@ const TopTable = () => {
           iterate
         />
       )}
-    </div>
-  )
-}
+    </S.TopTable>
+  );
+};
 
-export default TopTable
+export default TopTable;

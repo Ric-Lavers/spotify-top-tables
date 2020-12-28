@@ -1,5 +1,5 @@
-import Axios from "services/axiosSetup"
+import Axios from "services/axiosSetup";
 
-export function getTopArtists(name: string): Promise<any> {
-  return Axios.get("group/new", { params: { name } })
+export function addNewGroup(group_name: string): Promise<any> {
+  return Axios.get(`group/add/${group_name}`);
 }

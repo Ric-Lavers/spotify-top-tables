@@ -1,76 +1,77 @@
 //@ts-nocheck
-import { Machine, assign } from "xstate"
+import { Machine, assign } from "xstate";
 import {
   UsersTopArtistsResponse,
   UsersTopTracksResponse,
   ArtistObjectFull,
   TrackObjectFull,
-} from "types/spotify-api"
-import { getAllTop } from "services/me/top/all"
-import { getTopTracks } from "services/me/top/tracks"
-import { getTopArtists } from "services/me/top/artists"
-import { getCurrentUsersGroups } from "services/me/groups"
-import { getGroupById } from "services/group/getGroupById"
-import { reduceGenres } from "utils"
+} from "types/spotify-api";
+import { getAllTop } from "services/me/top/all";
+import { getTopTracks } from "services/me/top/tracks";
+import { getTopArtists } from "services/me/top/artists";
+import { getCurrentUsersGroups } from "services/me/groups";
+import { addNewGroup } from "services/group/new.ts";
+import { getGroupById } from "services/group/getGroupById";
+import { reduceGenres } from "utils";
 
 const getTopData = ({ type, time_range }) => {
   return type === "artist"
     ? getTopArtists({ time_range })
-    : getTopTracks({ time_range })
-}
+    : getTopTracks({ time_range });
+};
 export interface TopData {
-  track_short_term: TrackObjectFull | null
-  track_medium_term: TrackObjectFull | null
-  track_long_term: TrackObjectFull | null
+  track_short_term: TrackObjectFull | null;
+  track_medium_term: TrackObjectFull | null;
+  track_long_term: TrackObjectFull | null;
 
-  artist_short_term: ArtistObjectFull | null
-  artist_medium_term: ArtistObjectFull | null
-  artist_long_term: ArtistObjectFull | null
+  artist_short_term: ArtistObjectFull | null;
+  artist_medium_term: ArtistObjectFull | null;
+  artist_long_term: ArtistObjectFull | null;
 }
 export interface TContext {
-  type: "track" | "artist"
-  time_range: "short_term" | "medium_term" | "long_term"
-  selectedGroupId: string
-  selectedGroupMembers: { display_name: string; _id: string }[]
-  groupList: { _id: string; id: string; name: string }[]
-  isNewGroupModalOpen: boolean
-  topData: TopData
+  type: "track" | "artist";
+  time_range: "short_term" | "medium_term" | "long_term";
+  selectedGroupId: string;
+  selectedGroupMembers: { display_name: string; _id: string }[];
+  groupList: { _id: string; id: string; name: string }[];
+  topData: TopData;
 }
 interface TStateSchema {
   states: {
     intitalFetch: {
       invoke: {
-        id: string
-        src: string
+        id: string;
+        src: string;
         onDone: {
-          target: string
-          actions: string
-        }
+          target: string;
+          actions: string;
+        };
         onError: {
-          actions?: string
-          target: string
-        }
-      }
-    }
+          actions?: string;
+          target: string;
+        };
+      };
+    };
     topTable: {
       states: {
-        trackTable: {}
-        artistTable: {}
-        hist: {}
-      }
-    }
-    newGroupModal: {}
-    error: {}
-  }
+        trackTable: {};
+        artistTable: {};
+        hist: {};
+      };
+    };
+    newGroupModal: {};
+    error: {};
+  };
 }
 type TEvent =
   | { type: "" }
   | { type: "NEW_GROUP" }
   | { type: "SELECT_GROUP"; id: string }
+  | { type: "SET_NEW_GROUP_NAME"; group_name: string }
   | { type: "SELECT_TRACK" }
   | { type: "SELECT_ARTIST" }
   | { type: string }
-  | { type: "SET_TIME_RANGE"; time_range: Pick<TContext, "time_range"> }
+  | { type: "SET_TIME_RANGE"; time_range: Pick<TContext, "time_range"> };
 
 //@ts-ignore
 const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
@@ -82,7 +83,7 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
       time_range: "short_term",
       selectedGroupId: "",
       groupList: [],
-      isNewGroupModalOpen: false,
+      new_group_name: "",
       topData: {
         track_short_term: null,
         track_medium_term: null,
@@ -107,14 +108,14 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
           },
         },
       },
-
       newGroupModal: {
+        initial: "entering",
         states: {
           entering: {},
           loading: {
             invoke: {
               id: "addNewGroup",
-              src: "invokeGetTopData",
+              src: "addGroup",
               onDone: {
                 target: "#top-table.topTable.trackTable.display",
                 actions: ["setTopData"],
@@ -125,7 +126,6 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
               },
             },
           },
-          complete: {},
         },
       },
       topTable: {
@@ -243,6 +243,12 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
         target: "topTable.fetchGroup",
         actions: "setSelectedGroupId",
       },
+      NEW_GROUP: {
+        target: "newGroupModal.loading",
+      },
+      SET_NEW_GROUP_NAME: {
+        actions: "setGroupName",
+      },
       RESET: "initalise",
     },
   },
@@ -253,25 +259,25 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
       newGroupModal: console.log,
 
       setTopData: assign(({ type, time_range, topData }, { data }) => {
-        let genres = {}
+        let genres = {};
         if (type === "artist") {
-          genres = { genres: reduceGenres(data.items as ArtistObjectFull[]) }
+          genres = { genres: reduceGenres(data.items as ArtistObjectFull[]) };
         }
         return {
           topData: {
             ...topData,
             [`${type}_${time_range}`]: { ...data, ...genres },
           },
-        }
+        };
       }),
       setInitialData: assign((_, { data }) => {
         return {
           groupList: data[0],
           topData: Object.keys(data[1]).reduce((a, key) => {
-            a[key] = data[1][key].items
-            return a
+            a[key] = data[1][key].items;
+            return a;
           }, {}),
-        }
+        };
       }),
       setGroupData: assign(
         (
@@ -287,7 +293,7 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
               artist_long_term,
               users,
             },
-          },
+          }
         ) => {
           return {
             selectedGroupMembers: users,
@@ -300,25 +306,27 @@ const topTableMachine = Machine<TContext, TStateSchema, TEvent>(
               artist_medium_term,
               artist_long_term,
             },
-          }
-        },
+          };
+        }
       ),
       setSelectedGroupId: assign((_, { id }) => ({ selectedGroupId: id })),
     },
     services: {
       invokeGetTopData: ({ type, time_range }, event) => {
-        return getTopData({ type, time_range })
+        return getTopData({ type, time_range });
       },
-      addGroup: () => {},
+      addGroup: ({ new_group_name }) => {
+        if (new_group_name) return addNewGroup(new_group_name);
+      },
       invokeInit: () => {
-        return Promise.all([getCurrentUsersGroups(), getAllTop()])
+        return Promise.all([getCurrentUsersGroups(), getAllTop()]);
       },
       invokeGroupById: ({ selectedGroupId }, event) => {
-        console.log({ event, selectedGroupId })
+        console.log({ event, selectedGroupId });
 
-        return getGroupById(selectedGroupId)
+        return getGroupById(selectedGroupId);
       },
     },
-  },
-)
-export default topTableMachine
+  }
+);
+export default topTableMachine;

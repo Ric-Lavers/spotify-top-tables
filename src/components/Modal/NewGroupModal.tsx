@@ -1,33 +1,27 @@
-import React from "react"
-import Modal from "react-aria-modal"
+import React from "react";
+import Modal from "react-aria-modal";
+
+import * as S from "./Modal.style";
 
 interface Props {
-  isOpen: boolean
-  onExit: () => void
-  onSubmit: (value: string) => void
+  isOpen: boolean;
+  onExit: () => void;
+  onSubmit: (value: string) => void;
 }
 const NewGroupModal: React.FC<Props> = ({ isOpen, onExit, onSubmit }) => {
-  const [value, setValue] = React.useState("")
+  const [value, setValue] = React.useState("");
   function handleSubmit(e: any) {
-    e.preventDefault()
+    e.preventDefault();
 
-    onSubmit(value)
-    onExit()
+    onSubmit(value);
+    onExit();
   }
   if (!isOpen) {
-    return <></>
+    return <></>;
   }
   return (
     <Modal titleText="Delete message" onExit={onExit} verticallyCenter>
-      <form
-        style={{
-          width: "50%",
-          height: "50%",
-          minWidth: 400,
-          minHeight: 400,
-          backgroundColor: "#f5f5f5",
-        }}
-        onSubmit={handleSubmit}>
+      <S.Form onSubmit={handleSubmit}>
         <label>
           <p>
             Enter new group name <i>(one word)</i>?
@@ -39,8 +33,8 @@ const NewGroupModal: React.FC<Props> = ({ isOpen, onExit, onSubmit }) => {
           />
         </label>
         <input id="new-group__submit" type="submit" />
-      </form>
+      </S.Form>
     </Modal>
-  )
-}
-export default NewGroupModal
+  );
+};
+export default NewGroupModal;

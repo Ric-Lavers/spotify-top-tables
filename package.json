@@ -11,6 +11,7 @@
     "react-aria-modal": "^4.0.0",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",
+    "react-use": "^15.3.4",
     "styled-components": "^5.2.0",
     "xstate": "^4.13.0"
   },
@@ -26,6 +27,7 @@
     "@types/react-aria-modal": "^4.0.2",
     "@types/react-dom": "^16.9.8",
     "@types/spotify-api": "^0.0.4",
+    "@types/styled-components": "^5.1.7",
     "typescript": "^4.0.3"
   },
   "scripts": {
